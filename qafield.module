@@ -1,7 +1,9 @@
 <?php
 
-
-
+// @todos:
+// - make 'reveal answer' text configurable per item 
+// - get entity ids in theme_qafield (not actually massively important, using random ids is basically fine)
+// - make text processing optional
 
 
 /***************************************************************
@@ -35,19 +37,19 @@ function theme_qafield(&$vars){
   drupal_add_js(drupal_get_path("module","qafield") . "/qafield.js");
   drupal_add_css(drupal_get_path("module","qafield") . "/qafield.css");
 
+  $id = $vars['entity_type'] . "-";
   if($vars['entity_type'] == 'node'){
-    $id = $vars['entity']->nid;
+    $id .= $vars['entity']->nid;
     // @todo - get other entity IDs
   }else{
-    $id = rand();
+    $id .= rand();
   }
 
   $id .= "-" . $vars['delta'];
 
   $output = '<div class="qafield-question" id="question-' . $id . '">' . $vars['question'] . '</div>';
-  $output .= '<div class="qafield-reveal" id="reveal-' . $id . '"><a class="reveal" data-id="' . $id . '" href="#">Click to reveal answer!</a></div>';
-  $output .= '<div class="qafield-answer" id="answer-' . $id . '">' . $vars['answer'] . '</div>';
-
+  $output .= '<div class="qafield-answer-holder"><div class="qafield-reveal" id="reveal-' . $id . '"><a class="reveal" data-id="' . $id . '" href="#">Click to reveal answer!</a></div>';
+  $output .= '<div class="qafield-answer" id="answer-' . $id . '">' . $vars['answer'] . '</div></div>';
 
   return $output;
 
@@ -151,13 +153,14 @@ function qafield_field_formatter_view($entity_type, $entity, $field, $instance, 
     // This formatter simply outputs the field as text and with a color.
     case 'qafield_default':
       foreach ($items as $delta => $item) {
+        drupal_set_message('item : ' . print_r($item,true));
         $element[$delta] = array(
           // We create a render array to produce the desired markup,
           // "<p style="color: #hexcolor">The color code ... #hexcolor</p>".
           // See theme_html_tag().
           '#theme' => 'qafield',
-          '#question' => $item['question'],
-          '#answer' => $item['answer'],
+          '#question' => check_markup($item['question_value'],$item['question_format']),
+          '#answer' => check_markup($item['answer_value'],$item['answer_format']),
           '#delta' => $delta,
           '#entity' => $entity,
           '#entity_type' => $entity_type,
@@ -261,34 +264,6 @@ function qafield_field_widget_form(&$form, &$form_state, $field, $instance, $lan
 
 
 /**
- * Validate the individual fields and then convert to RGB string.
- */
-function qafield_textareas_validate($element, &$form_state) {
-  // @todo: Isn't there a better way to find out which element?
-  /*$delta = $element['#delta'];
-  $field = $form_state['field'][$element['#field_name']][$element['#language']]['field'];
-  $field_name = $field['field_name'];
-  if (isset($form_state['values'][$field_name][$element['#language']][$delta]['rgb'])) {
-    $values = $form_state['values'][$field_name][$element['#language']][$delta]['rgb'];
-    foreach (array('r', 'g', 'b') as $colorfield) {
-      $colorfield_value = hexdec($values[$colorfield]);
-      // If they left any empty, we'll set the value empty and quit.
-      if (strlen($values[$colorfield]) == 0) {
-        form_set_value($element, '', $form_state);
-        return;
-      }
-      // If they gave us anything that's not hex, reject it.
-      if ((strlen($values[$colorfield]) != 2) || $colorfield_value < 0 || $colorfield_value > 255) {
-        form_error($element[$colorfield], t("Saturation value must be a 2-digit hexadecimal value between 00 and ff."));
-      }
-    }
-
-    $value = sprintf('#%02s%02s%02s', $values['r'], $values['g'], $values['b']);
-    form_set_value($element, $value, $form_state);
-  }*/
-}
-
-/**
  * Implements hook_field_widget_error().
  *
  * hook_field_widget_error() lets us figure out what to do with errors
@@ -306,27 +281,3 @@ function qafield_field_widget_error($element, $error, $form, &$form_state) {
   }
 }
 
-
-/**
- * Implements hook_menu().
- *
- * Provides a simple user interface that tells the developer where to go.
- */
-function qafield_menu() {
-  $items['examples/qafield'] = array(
-    'title' => 'Field Example',
-    'page callback' => '_qafield_page',
-    'access callback' => TRUE,
-  );
-  return $items;
-}
-
-/**
- * A simple page to explain to the developer what to do.
- */
-function _qafield_page() {
-  return t("The Field Example provides a field composed of an HTML RGB value, like #ff00ff. To use it, add the field to a content type.");
-}
-/**
- * @} End of "defgroup qafield".
- */

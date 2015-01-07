@@ -3,7 +3,7 @@
 		$(".qafield-reveal a").click(function(){
 			var id = $(this).data("id");
 			var answerid = '#answer-' + id;
-			$(answerid).fadeIn();
+			$(answerid).css('opacity',1	);
 			$(this).fadeOut();
 		});
 	});
