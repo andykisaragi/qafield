@@ -88,6 +88,19 @@ function qafield_field_validate($entity_type, $entity, $field, $instance, $langc
   }
 }
 
+/**
+ * Implements hook_field_presave().
+ */
+function qafield_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
+  foreach ($items as $delta => $value) {
+    //drupal_set_message('value : ' . print_r($value,true));
+    $items[$delta]['question_value'] = $items[$delta]['question']['value'];
+    $items[$delta]['question_format'] = $items[$delta]['question']['format'];
+    $items[$delta]['answer_value'] = $items[$delta]['answer']['value'];
+    $items[$delta]['answer_format'] = $items[$delta]['answer']['format'];
+  }
+}
+
 
 /**
  * Implements hook_field_is_empty().
@@ -97,7 +110,7 @@ function qafield_field_validate($entity_type, $entity, $field, $instance, $langc
  * the form API flag an error when required fields are empty.
  */
 function qafield_field_is_empty($item, $field) {
-  return empty($item['question']);
+  return empty($item['question']['value']) || empty($item['answer']['value']);
 }
 
 /**
@@ -198,59 +211,44 @@ function qafield_field_widget_form(&$form, &$form_state, $field, $instance, $lan
 
     case 'qafield_textareas':
 
-      // Make this a fieldset with the three text fields.
+      // Make this a fieldset with the two text areas.
       $widget += array(
         '#type' => 'fieldset',
-
-        // #delta is set so that the validation function will be able
-        // to access external value information which otherwise would be
-        // unavailable.
         '#delta' => $delta,
-
-
       );
-
 
       $main_widget = array(
           '#type' => 'textarea',
           '#title' => 'Question',
-          '#default_value' => '',
+          '#default_value' => isset($items[$delta]['question_value']) ? $items[$delta]['question_value'] : NULL,
           '#attributes' => array('class' => array('qa-textarea text-full')),
           '#description' => t(''),
       );
       $answer_widget = array(
           '#type' => 'textarea',
           '#title' => 'Answer',
-          '#default_value' => '',
+          '#default_value' => isset($items[$delta]['answer_value']) ? $items[$delta]['answer_value'] : NULL,
           '#attributes' => array('class' => array('qa-textarea text-full')),
           '#description' => t(''),
       );
 
-     /*$main_widget = $element + array(
-        '#title' => 'Question',
-        '#type' => 'textarea',
-        '#default_value' => isset($items[$delta]['value']) ? $items[$delta]['value'] : NULL,
-        //'#rows' => $instance['widget']['settings']['rows'],
-        '#attributes' => array('class' => array('qa-textarea text-full')),
-      );*/
-
       if ($main_widget) {
         // Conditionally alter the form element's type if text processing is enabled.
+        // @todo: add ability to en/disable text processing!
+
+        $element = $widget;
+        $element['question'] = $main_widget;
+        $element['answer'] = $answer_widget;
+
         if (1==1) {
-          $element = $widget;
-          $element['question'] = $main_widget;
           $element['question']['#type'] = 'text_format';
-          $element['question']['#format'] = isset($items[$delta]['format']) ? $items[$delta]['format'] : NULL;
+          $element['question']['#format'] = isset($items[$delta]['question_format']) ? $items[$delta]['question_format'] : NULL;
           $element['question']['#base_type'] = $main_widget['#type'];
-          $element['answer'] = $answer_widget;
           $element['answer']['#type'] = 'text_format';
-          $element['answer']['#format'] = isset($items[$delta]['format']) ? $items[$delta]['format'] : NULL;
+          $element['answer']['#format'] = isset($items[$delta]['answer_format']) ? $items[$delta]['answer_format'] : NULL;
           $element['answer']['#base_type'] = $answer_widget['#type'];
         }
-        else {
-          $element = $widget;
-          $element['question'] = $main_widget;
-        }
+
       }
    
       break;
@@ -258,7 +256,6 @@ function qafield_field_widget_form(&$form, &$form_state, $field, $instance, $lan
 
   }
 
- // $element['qa'] = $widget;
   return $element;
 }
 
