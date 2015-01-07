@@ -1,0 +1,4 @@
+name = Q/A Field
+description = Defines a field type with a question and hidden answer
+core = 7.x
+version = 1.0

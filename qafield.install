@@ -1,0 +1,62 @@
+<?php
+/**
+ * @file
+ * Install, update, and uninstall functions for the field_example module.
+ */
+
+/**
+ * Implements hook_field_schema().
+ *
+ * Defines the database schema of the field, using the format used by the
+ * Schema API.
+ *
+ * The data we will store here is just one 7-character element, even
+ * though the widget presents the three portions separately.
+ *
+ * All implementations of hook_field_schema() must be in the module's
+ * .install file.
+ *
+ * @see http://drupal.org/node/146939
+ * @see schemaapi
+ * @see hook_field_schema()
+ * @ingroup field_example
+ */
+function qafield_field_schema($field) {
+  $columns = array(
+    'question_value' => array(
+      'type' => 'text',
+      'size' => 'big',
+      'not null' => FALSE,
+    ),
+
+    'question_format' => array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => FALSE,
+    ),
+    'answer_value' => array(
+      'type' => 'text',
+      'size' => 'big',
+      'not null' => FALSE,
+    ),
+    'answer_format' => array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => FALSE,
+    ),
+  );
+
+  return array(
+    'columns' => $columns,
+    'indexes' => array(
+      'question_format' => array('question_format'),
+      'answer_format' => array('answer_format'),
+    ),
+    'foreign keys' => array(
+      'format' => array(
+        'table' => 'filter_format',
+        'columns' => array('answer_format' => 'answer_format','question_format' => 'question_format'),
+      ),
+    ),
+  );
+}
